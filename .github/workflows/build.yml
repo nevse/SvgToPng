@@ -14,7 +14,7 @@ jobs:
       - name: Set up .NET Core
         uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: '8.0.100-rc.1'
+          dotnet-version: '8.0.100-rc.1.23463.5'
       - name: Install dependencies
         run: dotnet restore svgtopng.csproj
       - name: Build
