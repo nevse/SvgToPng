@@ -16,6 +16,6 @@ jobs:
         with:
           dotnet-version: '8.0.100-rc.1.23463.5'
       - name: Install dependencies
-        run: dotnet restore svgtopng.csproj
+        run: dotnet restore SvgToPng.csproj
       - name: Build
-        run: dotnet build svgtopng.csproj
+        run: dotnet build SvgToPng.csproj
