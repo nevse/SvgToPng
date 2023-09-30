@@ -1,0 +1,21 @@
+name: dotnet package
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up .NET Core
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '8.0.100-rc.1'
+      - name: Install dependencies
+        run: dotnet restore svgtopng.csproj
+      - name: Build
+        run: dotnet build svgtopng.csproj
