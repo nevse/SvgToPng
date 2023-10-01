@@ -1,0 +1,89 @@
+name: Release Please
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  release-please:
+    runs-on: ubuntu-20.04
+    outputs:
+      created: ${{ steps.release.outputs.release_created }}
+      upload_url: ${{ steps.release.outputs.upload_url }}
+      version: ${{ steps.release.outputs.major }}.${{ steps.release.outputs.minor }}.${{ steps.release.outputs.patch }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - uses: google-github-actions/release-please-action@v3
+        id: release
+        with:
+          token: ${{ secrets.TOKEN_PR }}
+          release-type: simple
+          package-name: svgtopng
+          extra-files: |
+            SvgToPng.csproj
+
+  build-release:
+    runs-on: macos-latest
+    needs: release-please
+    if: ${{ needs.release-please.outputs.created }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Set up .NET Core
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '8.0.100-rc.1.23463.5'
+      - name: Install dependencies
+        run: dotnet restore svgtopng.csproj
+      - name: Build osx-arm64
+        run: dotnet publish svgtopng.csproj -c Release -r osx-arm64 -o bin/darwin-arm64
+      - name: Build osx-amd64
+        run: dotnet publish svgtopng.csproj -c Release -r osx-amd64 -o bin/darwin-amd64
+      # - name: Sign
+      #   env:
+      #     BUILD_CERTIFICATE_BASE64: ${{ secrets.BUILD_CERTIFICATE_BASE64 }}
+      #     P12_PASSWORD: ${{ secrets.P12_PASSWORD }}
+      #     KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+      #     APPLE_DEVELOPER_ID: ${{ secrets.APPLE_DEVELOPER_ID }}
+      #     ENTITLEMENTS_PATH: Assets/entitlemtns.plist
+      #   run: |
+      #     echo $BUILD_CERTIFICATE_BASE64 | base64 --decode > certificate.p12
+      #     security create-keychain -p $KEYCHAIN_PASSWORD build.keychain
+      #     security default-keychain -s build.keychain
+      #     security unlock-keychain -p $KEYCHAIN_PASSWORD build.keychain
+      #     security import certificate.p12 -k build.keychain -P $P12_PASSWORD -T /usr/bin/codesign
+      #     security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k $KEYCHAIN_PASSWORD build.keychain
+      #     codesign -s "$APPLE_DEVELOPER_ID" --entitlements $ENTITLEMENTS_PATH -f bin/darwin-amd64/conva
+      #     codesign -s "$APPLE_DEVELOPER_ID" --entitlements $ENTITLEMENTS_PATH -f bin/darwin-arm64/conva
+      - name: Pack osx-arm64
+        run: tar -czvf svgtopng-darwin-arm64.tar.gz -C bin/darwin-arm64 .
+      - name: Pack osx-amd64
+        run: tar -czvf svgtopng-darwin-amd64.tar.gz -C bin/darwin-amd64 .
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN_PR }}
+        with:
+          upload_url: ${{ needs.release-please.outputs.upload_url }}
+          asset_path: ./svgtopng-darwin-amd64.tar.gz
+          asset_name: svgtopng-darwin-amd64.tar.gz
+          asset_content_type: application/octet-stream
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN_PR }}
+        with:
+          upload_url: ${{ needs.release-please.outputs.upload_url }}
+          asset_path: ./svgtopng-darwin-arm64.tar.gz
+          asset_name: svgtopng-darwin-arm64.tar.gz
+          asset_content_type: application/octet-stream
+      # - name: Bump Brew Cask
+      #   env:
+      #     HOMEBREW_GITHUB_API_TOKEN: ${{ secrets.HOMEBREW_GITHUB_API_TOKEN }}
+      #   run: |
+      #     echo "Bumping MyHomebrewTap ${{ needs.release-please.outputs.tag_name}} - ${{ needs.release-please.outputs.version }}"
+      #     brew tap nevse/tap
+      #     brew bump-cask-pr -f --no-browse --version="${{ needs.release-please.outputs.version }}" conva
