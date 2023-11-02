@@ -23,8 +23,7 @@ foreach (var svgFilePath in Directory.GetFiles(svgFilesPath, "*.svg")) {
     };
     foreach (var scaleInfo in iosScales) {
         string fileName = Path.GetFileNameWithoutExtension(svgFilePath);
-        string path =
-            $@"{outputPath}/Resources/Images/{fileName}{scaleInfo.suffix}.png";
+        string path = Path.Combine(outputPath, "Resources", $"{fileName}{scaleInfo.suffix}.png");
         ScaleSvgTo(svg, scaleInfo.scale, path);
         Console.WriteLine($"Generated {path}");
     }
