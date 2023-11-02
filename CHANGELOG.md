@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.3](https://github.com/nevse/SvgToPng/compare/v0.0.2...v0.0.3) (2023-11-02)
+
+
+### Bug Fixes
+
+* improve pipeline ([87e998f](https://github.com/nevse/SvgToPng/commit/87e998f54bf7b3a19f6c671c9149f37e9a945f45))
+
 ## [0.0.2](https://github.com/nevse/SvgToPng/compare/v0.0.1...v0.0.2) (2023-11-02)
 
 
